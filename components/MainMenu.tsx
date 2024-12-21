@@ -157,6 +157,7 @@ export default function MainMenu() {
     }
   };
 
+  //eslint-disable-next-line
   const signInWithGoogle = async () => {
     try {
       const { error } = await db.auth.signInWithOAuth({
@@ -172,6 +173,7 @@ export default function MainMenu() {
     }
   };
 
+  //eslint-disable-next-line
   const signInWithFacebook = async () => {
     try {
       const { error } = await db.auth.signInWithOAuth({
