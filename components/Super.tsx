@@ -6,10 +6,7 @@ import { db } from "@/lib/db";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { Game, Player } from "@/types/database";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-
-interface SuperTicTacToeProps {
-  roomId: string;
-}
+import { useParams } from "next/navigation";
 
 type BoardState = (Player | null)[][];
 type WinnerType = Player | null;
@@ -19,11 +16,13 @@ interface GameState extends Omit<Game, "board"> {
   activeBoard: number | null;
 }
 
-export default function SuperTicTacToe({ roomId }: SuperTicTacToeProps) {
+export default function SuperTicTacToe() {
+  const { roomId } = useParams();
+  const userId = useCurrentUser();
+
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const userId = useCurrentUser();
   const [isMyTurn, setIsMyTurn] = useState(false);
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export default function SuperTicTacToe({ roomId }: SuperTicTacToeProps) {
         if (data) {
           setGameState({
             ...data,
-            boards: data.board as unknown as BoardState,
+            boards: JSON.parse(data.board),
             activeBoard: data.active_board ?? null,
           });
         }

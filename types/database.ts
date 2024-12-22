@@ -16,7 +16,7 @@ export type Database = {
       games: {
         Row: {
           active_board: number | null;
-          board: Board;
+          board: string;
           created_at: string;
           current_player: Player;
           id: string;

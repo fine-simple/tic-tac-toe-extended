@@ -1,23 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import type { Player, Game } from "@/types/database";
+import type { Player, Game, Board } from "@/types/database";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useParams } from "next/navigation";
 
-interface ClassicTicTacToeProps {
-  roomId: string;
-}
+export default function ClassicTicTacToe() {
+  const { roomId } = useParams();
+  const userId = useCurrentUser();
 
-export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
-  const [board, setBoard] = useState<Game["board"]>(Array(9).fill(null));
+  const [board, setBoard] = useState<Board>(Array(9).fill(null));
   const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
   const [winner, setWinner] = useState<Player | null>(null);
   const [gameStatus, setGameStatus] = useState<Game["status"]>("waiting");
   const [error, setError] = useState<string | null>(null);
-  const userId = useCurrentUser();
-  const [isMyTurn, setIsMyTurn] = useState(false);
+  const [playerSymbol, setPlayerSymbol] = useState<Player | null>(null);
 
   useEffect(() => {
     const fetchGameState = async () => {
@@ -31,7 +30,7 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
         if (error) throw error;
 
         if (data) {
-          setBoard(data.board as Game["board"]);
+          setBoard(JSON.parse(data.board));
           setCurrentPlayer(data.current_player);
           setGameStatus(data.status);
           setWinner(data.winner);
@@ -55,7 +54,7 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
           filter: `id=eq.${roomId}`,
         },
         (payload: { new: Game }) => {
-          setBoard(payload.new.board);
+          setBoard(payload.new.board as unknown as Board);
           setCurrentPlayer(payload.new.current_player);
           setGameStatus(payload.new.status);
           setWinner(payload.new.winner);
@@ -81,10 +80,24 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
 
         if (data && userId) {
           const isPlayerX = data.player_x === userId;
+          if (isPlayerX) {
+            setPlayerSymbol(isPlayerX ? "X" : "O");
+          } else if (data.player_o === userId) {
+            setPlayerSymbol("O");
+          } else if (data.player_o === null) {
+            const { error: updateError } = await db
+              .from("games")
+              .update({
+                player_o: userId,
+                is_guest_o: userId.startsWith("guest_"),
+                status: "in_progress",
+              })
+              .eq("id", roomId);
 
-          setIsMyTurn(
-            (isPlayerX && currentPlayer === "X") || currentPlayer === "O"
-          );
+            if (updateError) throw updateError;
+
+            setPlayerSymbol("O");
+          }
         }
       } catch (err) {
         console.error("Error fetching player info:", err);
@@ -93,6 +106,11 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
 
     fetchPlayerInfo();
   }, [currentPlayer, userId, roomId]);
+
+  const isMyTurn = useMemo(
+    () => playerSymbol === currentPlayer,
+    [currentPlayer, playerSymbol]
+  );
 
   const handleClick = async (index: number) => {
     if (!isMyTurn) return;
@@ -132,12 +150,42 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
         !board[index] ? "bg-gray-200 hover:bg-gray-300" : ""
       }`}
       onClick={() => handleClick(index)}
-      disabled={!isMyTurn || gameStatus === "completed" || !!board[index]}
+      disabled={!isMyTurn || gameStatus !== "in_progress" || !!board[index]}
       variant={board[index] ? "default" : "secondary"}
     >
       {board[index] || ""}
     </Button>
   );
+
+  const status = useMemo(() => {
+    if (winner) {
+      return <div className="text-green-600">Winner: {winner}</div>;
+    }
+
+    switch (gameStatus) {
+      case "completed":
+        return "Game Draw!";
+      case "waiting":
+        return (
+          <div className="text-yellow-600 text-lg">
+            Waiting for other player to join...
+          </div>
+        );
+      case "in_progress":
+        if (playerSymbol) {
+          if (isMyTurn)
+            return <div className="text-green-600 text-lg">Your turn!</div>;
+          else
+            return (
+              <div className="text-yellow-600 text-lg">
+                Waiting for other player&apos;s move...
+              </div>
+            );
+        }
+      default:
+        return null;
+    }
+  }, [gameStatus, isMyTurn, playerSymbol, winner]);
 
   if (error) {
     return <div className="text-red-600 text-center">{error}</div>;
@@ -146,28 +194,12 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
   return (
     <div className="flex flex-col items-center space-y-8">
       <div className="text-2xl font-bold text-center space-y-2">
-        {winner ? (
-          <div className="text-green-600">Winner: {winner}</div>
-        ) : gameStatus === "completed" ? (
-          <div>Game Draw!</div>
+        {playerSymbol ? (
+          <div>You play with {playerSymbol}</div>
         ) : (
-          <>
-            <div>Next player: {currentPlayer}</div>
-            {!isMyTurn && gameStatus === "in_progress" && (
-              <div className="text-yellow-600 text-lg">
-                Waiting for other player&apos;s move...
-              </div>
-            )}
-            {!isMyTurn && gameStatus === "waiting" && (
-              <div className="text-yellow-600 text-lg">
-                Waiting for other player to join...
-              </div>
-            )}
-            {isMyTurn && gameStatus === "in_progress" && (
-              <div className="text-green-600 text-lg">Your turn!</div>
-            )}
-          </>
+          <div>Spectating: {currentPlayer} turn</div>
         )}
+        <div>{status}</div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 bg-muted p-4 rounded-lg">
@@ -185,7 +217,7 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
   );
 }
 
-function calculateWinner(squares: Game["board"]): Player | null {
+function calculateWinner(squares: Board): Player | null {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],

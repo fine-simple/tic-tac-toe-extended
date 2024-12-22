@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ClassicTicTacToe from "@/components/Classic";
 import SuperTicTacToe from "@/components/Super";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface GameError {
   message: string;
@@ -16,10 +15,9 @@ interface GameError {
 export default function GamePage() {
   const params = useParams<{ roomId: string }>();
   const router = useRouter();
-  const [gameMode, setGameMode] = useState<"classic" | "super" | null>(null);
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<GameError | null>(null);
-  const userId = useCurrentUser();
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -39,8 +37,7 @@ export default function GamePage() {
           return;
         }
 
-        // Check if the game exists and set the mode
-        setGameMode(data.mode as "classic" | "super");
+        router.replace(`/game/${params.roomId}?mode=${data.mode}`);
       } catch (err: unknown) {
         console.error("Error fetching game:", err);
         setError({
@@ -53,7 +50,9 @@ export default function GamePage() {
     };
 
     fetchGame();
-  }, [params.roomId]);
+  }, [params.roomId, router]);
+
+  const gameMode = searchParams.get("mode") as "classic" | "super" | null;
 
   const handleReturnToMenu = () => {
     router.push("/");
@@ -95,23 +94,14 @@ export default function GamePage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <div className="flex flex-col space-y-2">
-            <h1 className="text-3xl font-bold">Game Room: {params.roomId}</h1>
-            <h6 className="text-sm text-muted-foreground pl-1">
-              User Id: {userId}
-            </h6>
-          </div>
+          <h1 className="text-3xl font-bold">Game Room: {params.roomId}</h1>
           <Button variant="outline" onClick={handleReturnToMenu}>
             Exit Game
           </Button>
         </div>
 
         <div className="bg-card rounded-lg shadow-lg p-6">
-          {gameMode === "classic" ? (
-            <ClassicTicTacToe roomId={params.roomId} />
-          ) : (
-            <SuperTicTacToe roomId={params.roomId} />
-          )}
+          {gameMode === "classic" ? <ClassicTicTacToe /> : <SuperTicTacToe />}
         </div>
       </div>
     </div>
