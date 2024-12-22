@@ -196,7 +196,7 @@ export default function SuperTicTacToe() {
       if (boardWinner) {
         return (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-9xl font-bold text-blue-600">
+            <span className="text-8xl md:text-9xl font-bold text-blue-600">
               {boardWinner}
             </span>
           </div>
