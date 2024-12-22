@@ -103,7 +103,7 @@ export default function GamePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-1 md:px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="flex-col md:flex-row flex items-center space-x-4">
@@ -119,7 +119,7 @@ export default function GamePage() {
           </Button>
         </div>
 
-        <div className="bg-card rounded-lg shadow-lg p-6">
+        <div className="bg-card rounded-lg shadow-lg p-2 md:p-6">
           {gameMode === "classic" ? <ClassicTicTacToe /> : <SuperTicTacToe />}
         </div>
       </div>

@@ -204,12 +204,12 @@ export default function SuperTicTacToe() {
       }
 
       return (
-        <div className="grid grid-cols-3 gap-1 p-2 bg-gray-200">
+        <div className="grid grid-cols-3 place-items-center gap-2 p-1 md:p-2 bg-gray-200">
           {gameState.board[boardIndex].map((cell, cellIndex) => (
             <Button
               key={cellIndex}
               variant={cell ? "default" : "secondary"}
-              className={`w-12 h-12 text-lg font-bold ${
+              className={`w-8 h-6 md:w-12 md:h-12 text-lg font-bold ${
                 !isMyTurn ? "cursor-not-allowed" : ""
               }`}
               onClick={() => handleClick(boardIndex, cellIndex)}
@@ -279,7 +279,7 @@ export default function SuperTicTacToe() {
         <div className="my-3">{status}</div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 max-w-2xl w-full">
+      <div className="grid grid-cols-3 gap-2 md:gap-4 w-full">
         {gameState.board.map((_, index) => (
           <div
             key={index}
