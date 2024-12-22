@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import type { Player, Game } from "@/lib/db";
+import type { Player, Game } from "@/types/database";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface ClassicTicTacToeProps {
@@ -31,7 +31,7 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
         if (error) throw error;
 
         if (data) {
-          setBoard(JSON.parse(data.board));
+          setBoard(data.board as Game["board"]);
           setCurrentPlayer(data.current_player);
           setGameStatus(data.status);
           setWinner(data.winner);
@@ -44,7 +44,6 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
 
     fetchGameState();
 
-    // Set up real-time subscription
     const channel = db
       .channel(`game_changes`)
       .on(
@@ -70,7 +69,6 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
   }, [roomId]);
 
   useEffect(() => {
-    // Add new effect to handle turn logic
     const fetchPlayerInfo = async () => {
       try {
         const { data, error } = await db

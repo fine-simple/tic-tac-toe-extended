@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database";
+import { Board, Database, Game, GameStatus, Player } from "@/types/database";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -16,26 +16,17 @@ export const db = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-export type GameStatus = "waiting" | "in_progress" | "completed";
-export type Player = "X" | "O";
-export type Board = (Player | "")[];
-
-export interface Game {
-  id: string;
-  player_x: string;
-  player_o: string | null;
-  board: Board;
-  current_player: Player;
-  winner: Player | null;
-  status: GameStatus;
-  created_at: string;
-  updated_at: string;
-}
-
 export async function createGame(userId: string): Promise<Game | null> {
   const { data, error } = await db
     .from("games")
-    .insert([{ player_x: userId }])
+    .insert({
+      id: Math.random().toString(36).substring(7),
+      player_x: userId,
+      board: Array(9).fill(""),
+      current_player: "X",
+      status: "waiting",
+      mode: "classic",
+    })
     .select()
     .single();
 

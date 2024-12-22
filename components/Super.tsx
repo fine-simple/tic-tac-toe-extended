@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { db, GameStatus, type Game, type Player } from "@/lib/db";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { db } from "@/lib/db";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import type { Game, Player } from "@/types/database";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 interface SuperTicTacToeProps {
   roomId: string;
@@ -16,19 +17,6 @@ type WinnerType = Player | null;
 interface GameState extends Omit<Game, "board"> {
   boards: BoardState;
   activeBoard: number | null;
-}
-
-interface GamePayload {
-  id: string;
-  board: BoardState;
-  active_board: number | null;
-  current_player: Player;
-  status: string;
-  winner: Player | null;
-  player_x: string;
-  player_o: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export default function SuperTicTacToe({ roomId }: SuperTicTacToeProps) {
@@ -52,7 +40,7 @@ export default function SuperTicTacToe({ roomId }: SuperTicTacToeProps) {
         if (data) {
           setGameState({
             ...data,
-            boards: JSON.parse(data.board as string),
+            boards: data.board as unknown as BoardState,
             activeBoard: data.active_board ?? null,
           });
         }
@@ -77,22 +65,10 @@ export default function SuperTicTacToe({ roomId }: SuperTicTacToeProps) {
           table: "games",
           filter: `id=eq.${roomId}`,
         },
-        (payload: RealtimePostgresChangesPayload<GamePayload>) => {
-          if (payload.new) {
-            const state: GamePayload = payload.new as GamePayload;
-            const newState: GameState = {
-              id: state.id,
-              player_x: state.player_x,
-              player_o: state.player_o,
-              current_player: state.current_player,
-              status: state.status as GameStatus,
-              winner: state.winner,
-              created_at: state.created_at,
-              updated_at: state.updated_at,
-              boards: state.board,
-              activeBoard: state.active_board,
-            };
-            setGameState(newState);
+        (payload: RealtimePostgresChangesPayload<GameState>) => {
+          const { new: gameState } = payload;
+          if ("id" in gameState) {
+            setGameState(gameState);
           }
         }
       )
