@@ -209,7 +209,7 @@ export default function SuperTicTacToe() {
             <Button
               key={cellIndex}
               variant={cell ? "default" : "secondary"}
-              className={`w-8 h-6 md:w-12 md:h-12 text-lg font-bold ${
+              className={`w-8 h-8 md_sm:w-10 md_sm:h-10 md:w-12 md:h-12 text-lg font-bold ${
                 !isMyTurn ? "cursor-not-allowed" : ""
               }`}
               onClick={() => handleClick(boardIndex, cellIndex)}
