@@ -6,6 +6,7 @@ import ClassicTicTacToe from "@/components/Classic";
 import SuperTicTacToe from "@/components/Super";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface GameError {
   message: string;
@@ -18,6 +19,7 @@ export default function GamePage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<GameError | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -58,6 +60,16 @@ export default function GamePage() {
     router.push("/");
   };
 
+  const handleCopyRoomUrl = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Room URL copied",
+      description:
+        "You can now share this URL with your friends to join the game.",
+      variant: "success",
+    });
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -94,7 +106,12 @@ export default function GamePage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Game Room: {params.roomId}</h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-3xl font-bold">Game Room: {params.roomId}</h1>
+            <Button variant="outline" size="sm" onClick={handleCopyRoomUrl}>
+              Copy Room URL
+            </Button>
+          </div>
           <Button variant="outline" onClick={handleReturnToMenu}>
             Exit Game
           </Button>

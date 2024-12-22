@@ -105,7 +105,7 @@ export default function ClassicTicTacToe() {
     };
 
     fetchPlayerInfo();
-  }, [currentPlayer, userId, roomId]);
+  }, [userId, roomId]);
 
   const isMyTurn = useMemo(
     () => playerSymbol === currentPlayer,
