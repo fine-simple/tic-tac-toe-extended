@@ -106,8 +106,10 @@ export default function GamePage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-bold">Game Room: {params.roomId}</h1>
+          <div className="flex-col md:flex-row flex items-center space-x-4">
+            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold">
+              Game Room: {params.roomId}
+            </h1>
             <Button variant="outline" size="sm" onClick={handleCopyRoomUrl}>
               Copy Room URL
             </Button>
