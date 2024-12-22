@@ -134,7 +134,8 @@ export default function SuperTicTacToe() {
     async (boardIndex: number, cellIndex: number) => {
       if (!gameState || !userId) return;
       if (!isMyTurn) return;
-      if (gameState.status === "completed") return;
+      if (gameState.status === "completed" || gameState.status === "waiting")
+        return;
       if (
         gameState.active_board !== null &&
         gameState.active_board !== boardIndex
@@ -216,6 +217,7 @@ export default function SuperTicTacToe() {
               disabled={
                 !isMyTurn ||
                 gameState.status === "completed" ||
+                gameState.status === "waiting" ||
                 cell !== null ||
                 (gameState.active_board !== null &&
                   gameState.active_board !== boardIndex)
