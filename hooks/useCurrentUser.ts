@@ -7,19 +7,21 @@ export function useCurrentUser() {
   useEffect(() => {
     // Check for authenticated user
     const getUser = async () => {
+      let userId: string | null = null;
       const {
         data: { session },
       } = await db.auth.getSession();
       if (session?.user) {
-        setUserId(session.user.id);
+        userId = session.user.id;
       } else {
         // If no authenticated user, get/create guest ID
         const guestId =
           localStorage.getItem("guestId") ||
           `guest_${Math.random().toString(36).substring(2)}`;
         localStorage.setItem("guestId", guestId);
-        setUserId(guestId);
+        userId = guestId;
       }
+      setUserId(userId);
     };
 
     getUser();

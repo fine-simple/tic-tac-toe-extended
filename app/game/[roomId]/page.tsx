@@ -6,6 +6,7 @@ import ClassicTicTacToe from "@/components/Classic";
 import SuperTicTacToe from "@/components/Super";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface GameError {
   message: string;
@@ -18,6 +19,7 @@ export default function GamePage() {
   const [gameMode, setGameMode] = useState<"classic" | "super" | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<GameError | null>(null);
+  const userId = useCurrentUser();
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -93,7 +95,12 @@ export default function GamePage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Game Room: {params.roomId}</h1>
+          <div className="flex flex-col space-y-2">
+            <h1 className="text-3xl font-bold">Game Room: {params.roomId}</h1>
+            <h6 className="text-sm text-muted-foreground pl-1">
+              User Id: {userId}
+            </h6>
+          </div>
           <Button variant="outline" onClick={handleReturnToMenu}>
             Exit Game
           </Button>

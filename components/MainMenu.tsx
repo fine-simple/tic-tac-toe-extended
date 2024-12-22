@@ -59,7 +59,7 @@ export default function MainMenu() {
     initializeAuth();
   }, []);
 
-  const createGame = async (mode: GameMode) => {
+  const handleCreateGame = async (mode: GameMode) => {
     setLoading(true);
     setError(null);
 
@@ -83,7 +83,7 @@ export default function MainMenu() {
         player_x: userId,
         board: JSON.stringify(initialBoard),
         status: "waiting",
-        is_guest_x: !session, // Flag to indicate if player X is a guest
+        is_guest_x: !session,
       });
 
       if (dbError) throw dbError;
@@ -219,10 +219,13 @@ export default function MainMenu() {
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Create New Game</h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button onClick={() => createGame("classic")} disabled={loading}>
+          <Button
+            onClick={() => handleCreateGame("classic")}
+            disabled={loading}
+          >
             Classic Mode
           </Button>
-          <Button onClick={() => createGame("super")} disabled={loading}>
+          <Button onClick={() => handleCreateGame("super")} disabled={loading}>
             Super Mode
           </Button>
         </div>

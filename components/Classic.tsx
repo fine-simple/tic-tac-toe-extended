@@ -83,10 +83,9 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
 
         if (data && userId) {
           const isPlayerX = data.player_x === userId;
-          const isPlayerO = data.player_o === userId;
+
           setIsMyTurn(
-            (isPlayerX && currentPlayer === "X") ||
-              (isPlayerO && currentPlayer === "O")
+            (isPlayerX && currentPlayer === "X") || currentPlayer === "O"
           );
         }
       } catch (err) {
@@ -159,6 +158,11 @@ export default function ClassicTicTacToe({ roomId }: ClassicTicTacToeProps) {
             {!isMyTurn && gameStatus === "in_progress" && (
               <div className="text-yellow-600 text-lg">
                 Waiting for other player&apos;s move...
+              </div>
+            )}
+            {!isMyTurn && gameStatus === "waiting" && (
+              <div className="text-yellow-600 text-lg">
+                Waiting for other player to join...
               </div>
             )}
             {isMyTurn && gameStatus === "in_progress" && (
