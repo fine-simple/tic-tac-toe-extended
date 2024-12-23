@@ -10,7 +10,7 @@ import { useParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 type BoardState = (Player | null)[][];
-type WinnerType = Player | null;
+type WinnerType = Player | "draw" | null;
 
 interface GameState extends Omit<Game, "board"> {
   board: BoardState;
@@ -167,7 +167,7 @@ export default function SuperTicTacToe() {
             current_player: nextPlayer,
             active_board: newActiveBoard,
             updated_at: new Date().toISOString(),
-            winner,
+            winner: winner === "draw" ? null : winner,
             status: winner ? "completed" : "in_progress",
           })
           .eq("id", roomId);
@@ -194,7 +194,15 @@ export default function SuperTicTacToe() {
 
       const boardWinner = calculateWinner(gameState.board[boardIndex]);
 
-      if (boardWinner) {
+      if (boardWinner === "draw") {
+        return (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <span className="text-4xl md:text-7xl font-bold text-gray-600">
+              Draw
+            </span>
+          </div>
+        );
+      } else if (boardWinner) {
         return (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
             <span className="text-8xl md:text-9xl font-bold text-blue-600">
@@ -205,12 +213,12 @@ export default function SuperTicTacToe() {
       }
 
       return (
-        <div className="grid grid-cols-3 place-items-center gap-2 p-1 md:p-2 bg-gray-200">
+        <div className="grid grid-cols-3 place-items-center gap-2 p-1 bg-gray-200">
           {gameState.board[boardIndex].map((cell, cellIndex) => (
             <Button
               key={cellIndex}
               variant={cell ? "default" : "secondary"}
-              className={`w-8 h-8 md_sm:w-10 md_sm:h-10 md:w-12 md:h-12 text-lg font-bold ${
+              className={`w-8 h-8 md_sm:w-10 md_sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-lg font-bold ${
                 !isMyTurn ? "cursor-not-allowed" : ""
               }`}
               onClick={() => handleClick(boardIndex, cellIndex)}
@@ -281,14 +289,14 @@ export default function SuperTicTacToe() {
         <div className="my-3">{status}</div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 md:gap-4 w-full">
+      <div className="grid grid-cols-3 grid-rows-3 gap-4 w-full">
         {gameState.board.map((_, index) => (
           <div
             key={index}
             className={`rounded-lg overflow-hidden ${
               gameState.status !== "completed" &&
-              gameState.active_board !== null &&
-              gameState.active_board === index
+              (gameState.active_board === null ||
+                gameState.active_board === index)
                 ? "ring-4 ring-blue-500"
                 : "ring-1 ring-gray-200"
             }`}
@@ -301,7 +309,7 @@ export default function SuperTicTacToe() {
   );
 }
 
-function calculateWinner(squares: (Player | null)[]): WinnerType {
+function calculateWinner(squares: (WinnerType | null)[]): WinnerType {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -314,9 +322,18 @@ function calculateWinner(squares: (Player | null)[]): WinnerType {
   ];
 
   for (const [a, b, c] of lines) {
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+    if (
+      squares[a] &&
+      squares[a] !== "draw" &&
+      squares[a] === squares[b] &&
+      squares[a] === squares[c]
+    ) {
       return squares[a];
     }
+  }
+
+  if (squares.every((cell) => cell !== null)) {
+    return "draw";
   }
 
   return null;
