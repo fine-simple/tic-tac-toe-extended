@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import ClassicTicTacToe, { GameClassicState } from "@/components/Classic";
 import SuperTicTacToe, { GameSuperState } from "@/components/Super";
 import { db } from "@/lib/db";
@@ -34,7 +34,6 @@ export default function GamePage() {
   const { roomId } = useParams<{ roomId: string }>();
   const router = useRouter();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   const userId = useCurrentUser();
   const [playerSymbol, setPlayerSymbol] = useState<Player | null>(null);
 
@@ -59,7 +58,6 @@ export default function GamePage() {
             board: JSON.parse(data.board),
           });
         }
-        router.replace(`/game/${roomId}?mode=${data.mode}`);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching game state:", err);
@@ -144,8 +142,6 @@ export default function GamePage() {
     fetchPlayerInfo();
   }, [roomId, toast, userId]);
 
-  const gameMode = searchParams.get("mode") as "classic" | "super" | null;
-
   const handleReturnToMenu = useCallback(() => {
     router.push("/");
   }, [router]);
@@ -216,7 +212,7 @@ export default function GamePage() {
     );
   }
 
-  if (!gameMode) {
+  if (!gameState?.mode) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
         <div className="text-xl">Invalid game mode</div>
@@ -246,7 +242,7 @@ export default function GamePage() {
             )}
             <div>{status}</div>
           </div>
-          {gameMode === "classic" ? (
+          {gameState?.mode === "classic" ? (
             <ClassicTicTacToe
               gameState={gameState as GameClassicState}
               isMyTurn={isMyTurn}

@@ -39,16 +39,15 @@ const ClassicTicTacToe: FC<IClassicTicTacToeProps> = ({
         const newBoard = [...board];
         newBoard[index] = current_player;
         const newWinner = calculateWinner(newBoard);
-        const isDraw = !newWinner && newBoard.every((cell) => cell !== null);
         const nextPlayer = current_player === "X" ? "O" : "X";
-        const newStatus = newWinner || isDraw ? "completed" : "in_progress";
+        const newStatus = newWinner ? "completed" : "in_progress";
 
         const { error } = await db
           .from("games")
           .update({
             board: JSON.stringify(newBoard),
             current_player: nextPlayer,
-            winner: newWinner,
+            winner: newWinner === "draw" ? null : newWinner,
             status: newStatus,
             updated_at: new Date().toISOString(),
           })

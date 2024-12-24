@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import type { Session } from "@supabase/supabase-js";
 
 type GameMode = "classic" | "super";
 
@@ -14,47 +13,20 @@ interface GameError {
 }
 
 export default function MainMenu() {
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<GameError | null>(null);
   const [guestId, setGuestId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      // Check for existing session
-      const {
-        data: { session },
-      } = await db.auth.getSession();
-      setSession(session);
-
-      // If no session, create or retrieve guest ID
-      if (!session) {
-        const storedGuestId = localStorage.getItem("guestId");
-        if (storedGuestId) {
-          setGuestId(storedGuestId);
-        } else {
-          const newGuestId = `guest_${Math.random().toString(36).substring(2)}`;
-          localStorage.setItem("guestId", newGuestId);
-          setGuestId(newGuestId);
-        }
-      }
-
-      const {
-        data: { subscription },
-      } = db.auth.onAuthStateChange((_event, session) => {
-        setSession(session);
-        if (session) {
-          // Clear guest ID if user signs in
-          localStorage.removeItem("guestId");
-          setGuestId(null);
-        }
-      });
-
-      return () => subscription.unsubscribe();
-    };
-
-    initializeAuth();
+    const storedGuestId = localStorage.getItem("guestId");
+    if (storedGuestId) {
+      setGuestId(storedGuestId);
+    } else {
+      const newGuestId = `guest_${Math.random().toString(36).substring(2)}`;
+      localStorage.setItem("guestId", newGuestId);
+      setGuestId(newGuestId);
+    }
   }, []);
 
   const handleCreateGame = useCallback(
@@ -63,7 +35,7 @@ export default function MainMenu() {
       setError(null);
 
       try {
-        const userId = session?.user?.id || guestId;
+        const userId = guestId;
         if (!userId) {
           setError({ message: "Unable to create game", status: "error" });
           return;
@@ -82,7 +54,7 @@ export default function MainMenu() {
           player_x: userId,
           board: JSON.stringify(initialBoard),
           status: "waiting",
-          is_guest_x: !session,
+          is_guest_x: true,
         });
 
         if (dbError) throw dbError;
@@ -98,7 +70,7 @@ export default function MainMenu() {
         setLoading(false);
       }
     },
-    [guestId, router, session]
+    [guestId, router]
   );
 
   return (
