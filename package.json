@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > types/database.ts",
-    "test": "echo ${SUPABASE_PROJECT_ID:-No Supabase project ID set}"
+    "generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > types/database.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",
@@ -23,7 +22,8 @@
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^2.5.5",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@types/node": "^20",

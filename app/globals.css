@@ -4,7 +4,7 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
-  min-width: 460px;
+  min-width: 400px;
 }
 
 @layer utilities {

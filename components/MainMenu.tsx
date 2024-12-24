@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { db } from "@/lib/db";
-
-type GameMode = "classic" | "super";
+import { useGameStore } from "@/lib/game/store";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import type { GameMode } from "@/types/database";
 
 interface GameError {
   message: string;
@@ -15,63 +15,32 @@ interface GameError {
 export default function MainMenu() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<GameError | null>(null);
-  const [guestId, setGuestId] = useState<string | null>(null);
   const router = useRouter();
+  const userId = useCurrentUser();
+  const { createGame } = useGameStore();
 
-  useEffect(() => {
-    const storedGuestId = localStorage.getItem("guestId");
-    if (storedGuestId) {
-      setGuestId(storedGuestId);
-    } else {
-      const newGuestId = `guest_${Math.random().toString(36).substring(2)}`;
-      localStorage.setItem("guestId", newGuestId);
-      setGuestId(newGuestId);
+  const handleCreateGame = async (mode: GameMode) => {
+    if (!userId) {
+      setError({ message: "Unable to create game", status: "error" });
+      return;
     }
-  }, []);
 
-  const handleCreateGame = useCallback(
-    async (mode: GameMode) => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const userId = guestId;
-        if (!userId) {
-          setError({ message: "Unable to create game", status: "error" });
-          return;
-        }
-
-        const roomId = Math.random().toString(36).substring(2, 8);
-        const initialBoard =
-          mode === "classic"
-            ? Array(9).fill(null)
-            : Array(9).fill(Array(9).fill(null));
-
-        const { error: dbError } = await db.from("games").insert({
-          id: roomId,
-          mode,
-          current_player: "X",
-          player_x: userId,
-          board: JSON.stringify(initialBoard),
-          status: "waiting",
-          is_guest_x: true,
-        });
-
-        if (dbError) throw dbError;
-
-        router.push(`/game/${roomId}?mode=${mode}`);
-      } catch (err) {
-        setError({
-          message: "Failed to create game. Please try again.",
-          status: "error",
-        });
-        console.error("Error creating game:", err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [guestId, router]
-  );
+    try {
+      const roomId = await createGame(mode, userId);
+      router.push(`/game/${roomId}?mode=${mode}`);
+    } catch (err) {
+      setError({
+        message: "Failed to create game. Please try again.",
+        status: "error",
+      });
+      console.error("Error creating game:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto space-y-8 p-4">

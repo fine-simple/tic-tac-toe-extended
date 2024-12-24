@@ -10,6 +10,7 @@ export type GameStatus = "waiting" | "in_progress" | "completed";
 export type Player = "X" | "O";
 export type Winner = Player | "draw";
 export type Board = (Winner | null)[];
+export type GameMode = "classic" | "super";
 
 export type Database = {
   public: {
@@ -17,18 +18,18 @@ export type Database = {
       games: {
         Row: {
           active_board: number | null;
-          board: string;
+          board: Board | Board[];
           created_at: string;
           current_player: Player;
           id: string;
           is_guest_o: boolean | null;
           is_guest_x: boolean | null;
-          mode: string;
-          player_o: Player | null;
-          player_x: Player;
+          mode: GameMode;
+          player_o: string | null;
+          player_x: string;
           status: GameStatus;
           updated_at: string;
-          winner: Player | null;
+          winner: Winner | null;
         };
         Insert: {
           active_board?: number | null;
