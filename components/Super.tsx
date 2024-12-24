@@ -1,137 +1,29 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useCallback, FC } from "react";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import type { Board, Game, Player, Winner } from "@/types/database";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type { Board, Game } from "@/types/database";
 import { useParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { calculateWinner } from "@/lib/utils";
 
-type BoardState = Board[];
-
-interface GameState extends Omit<Game, "board"> {
-  board: BoardState;
+export interface GameSuperState extends Omit<Game, "board"> {
+  board: Board[];
 }
 
-export default function SuperTicTacToe() {
+interface ISuperTicTacToeProps {
+  gameState: GameSuperState;
+  isMyTurn: boolean;
+}
+
+const SuperTicTacToe: FC<ISuperTicTacToeProps> = ({ gameState, isMyTurn }) => {
   const { roomId } = useParams();
-  const userId = useCurrentUser();
   const { toast } = useToast();
-
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [playerSymbol, setPlayerSymbol] = useState<Player | null>(null);
-
-  useEffect(() => {
-    const fetchGameState = async () => {
-      try {
-        const { data, error } = await db
-          .from("games")
-          .select("*")
-          .eq("id", roomId)
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          setGameState({
-            ...data,
-            board: JSON.parse(data.board),
-          });
-        }
-      } catch (err) {
-        toast({
-          title: "Failed to load game",
-          description: (err as Error).message,
-          variant: "error",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGameState();
-
-    // Set up real-time subscription
-    const channel = db
-      .channel(`game_changes`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "games",
-          filter: `id=eq.${roomId}`,
-        },
-        (payload: RealtimePostgresChangesPayload<GameState>) => {
-          const { new: gameState } = payload;
-          if ("id" in gameState) {
-            setGameState(gameState);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      db.removeChannel(channel);
-    };
-  }, [roomId, toast]);
-
-  useEffect(() => {
-    const fetchPlayerInfo = async () => {
-      try {
-        const { data, error } = await db
-          .from("games")
-          .select("player_x, player_o")
-          .eq("id", roomId)
-          .single();
-
-        if (error) throw error;
-
-        if (data && userId) {
-          const isPlayerX = data.player_x === userId;
-          if (isPlayerX) {
-            setPlayerSymbol(isPlayerX ? "X" : "O");
-          } else if (data.player_o === userId) {
-            setPlayerSymbol("O");
-          } else if (data.player_o === null) {
-            const { error: updateError } = await db
-              .from("games")
-              .update({
-                player_o: userId,
-                is_guest_o: userId.startsWith("guest_"),
-                status: "in_progress",
-              })
-              .eq("id", roomId);
-
-            if (updateError) throw updateError;
-
-            setPlayerSymbol("O");
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching player info:", err);
-        toast({
-          title: "Failed to fetch player info",
-          description: (err as Error).message,
-          variant: "error",
-        });
-      }
-    };
-
-    fetchPlayerInfo();
-  }, [roomId, toast, userId]);
-
-  const isMyTurn = useMemo(
-    () => playerSymbol === gameState?.current_player,
-    [playerSymbol, gameState]
-  );
 
   const handleClick = useCallback(
     async (boardIndex: number, cellIndex: number) => {
-      if (!gameState || !userId) return;
+      if (!gameState) return;
       if (!isMyTurn) return;
       if (gameState.status === "completed" || gameState.status === "waiting")
         return;
@@ -184,7 +76,7 @@ export default function SuperTicTacToe() {
         );
       }
     },
-    [gameState, isMyTurn, roomId, toast, userId]
+    [gameState, isMyTurn, roomId, toast]
   );
 
   const renderBoard = useCallback(
@@ -260,88 +152,11 @@ export default function SuperTicTacToe() {
     [gameState, handleClick, isMyTurn]
   );
 
-  const status = useMemo(() => {
-    if (gameState?.winner) {
-      return <div className="text-green-600">Winner: {gameState.winner}</div>;
-    }
-
-    switch (gameState?.status) {
-      case "completed":
-        return "Game Draw!";
-      case "waiting":
-        return (
-          <div className="text-yellow-600 text-lg">
-            Waiting for other player to join...
-          </div>
-        );
-      case "in_progress":
-        if (playerSymbol) {
-          if (isMyTurn)
-            return <div className="text-green-600 text-lg">Your turn!</div>;
-          else
-            return (
-              <div className="text-yellow-600 text-lg">
-                Waiting for other player&apos;s move...
-              </div>
-            );
-        }
-      default:
-        return null;
-    }
-  }, [gameState?.status, gameState?.winner, isMyTurn, playerSymbol]);
-
-  if (loading) {
-    return <div className="text-center p-4">Loading game...</div>;
-  }
-
-  if (!gameState) {
-    return <div className="text-center p-4">Game not found</div>;
-  }
-
   return (
-    <div className="flex flex-col items-center">
-      <div className="text-2xl font-bold text-center">
-        {playerSymbol ? (
-          <div>You play with {playerSymbol}</div>
-        ) : (
-          <div>Spectating: {gameState?.current_player} turn</div>
-        )}
-        <div className="my-3">{status}</div>
-      </div>
-
-      <div className="grid grid-cols-3 grid-rows-3 gap-4 w-full md:w-3/4">
-        {gameState.board.map((_, index) => renderBoard(index))}
-      </div>
+    <div className="grid grid-cols-3 grid-rows-3 gap-4 w-full md:w-3/4">
+      {gameState.board.map((_, index) => renderBoard(index))}
     </div>
   );
-}
+};
 
-function calculateWinner(squares: Board): Winner | null {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-
-  for (const [a, b, c] of lines) {
-    if (
-      squares[a] &&
-      squares[a] !== "draw" &&
-      squares[a] === squares[b] &&
-      squares[a] === squares[c]
-    ) {
-      return squares[a];
-    }
-  }
-
-  if (squares.every((cell) => cell !== null)) {
-    return "draw";
-  }
-
-  return null;
-}
+export default SuperTicTacToe;
