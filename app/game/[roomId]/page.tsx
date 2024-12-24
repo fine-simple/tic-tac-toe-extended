@@ -15,15 +15,6 @@ import {
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Player } from "@/types/database";
 
-const handleSubscription = (
-  status: REALTIME_SUBSCRIBE_STATES,
-  channel: RealtimeChannel
-) => {
-  if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-    channel.subscribe((status) => handleSubscription(status, channel));
-  }
-};
-
 type GameState = GameClassicState | GameSuperState;
 
 export default function GamePage() {
@@ -65,6 +56,16 @@ export default function GamePage() {
           description: (err as Error).message,
           variant: "error",
         });
+      }
+    };
+
+    const handleSubscription = (
+      status: REALTIME_SUBSCRIBE_STATES,
+      channel: RealtimeChannel
+    ) => {
+      if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+        fetchGameState();
+        channel.subscribe((status) => handleSubscription(status, channel));
       }
     };
 
