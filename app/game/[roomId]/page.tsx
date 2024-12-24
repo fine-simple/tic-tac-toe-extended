@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ClassicTicTacToe, { GameClassicState } from "@/components/Classic";
 import SuperTicTacToe, { GameSuperState } from "@/components/Super";
@@ -146,9 +146,9 @@ export default function GamePage() {
 
   const gameMode = searchParams.get("mode") as "classic" | "super" | null;
 
-  const handleReturnToMenu = () => {
+  const handleReturnToMenu = useCallback(() => {
     router.push("/");
-  };
+  }, [router]);
 
   const handleCopyRoomUrl = () => {
     navigator.clipboard.writeText(window.location.href);
