@@ -4,13 +4,12 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import type { Game, Player } from "@/types/database";
+import type { Board, Game, Player, Winner } from "@/types/database";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
-type BoardState = (Player | null)[][];
-type WinnerType = Player | "draw" | null;
+type BoardState = Board[];
 
 interface GameState extends Omit<Game, "board"> {
   board: BoardState;
@@ -317,7 +316,7 @@ export default function SuperTicTacToe() {
   );
 }
 
-function calculateWinner(squares: (WinnerType | null)[]): WinnerType {
+function calculateWinner(squares: Board): Winner | null {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],

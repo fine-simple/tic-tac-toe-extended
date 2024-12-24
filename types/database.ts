@@ -8,7 +8,8 @@ export type Json =
 
 export type GameStatus = "waiting" | "in_progress" | "completed";
 export type Player = "X" | "O";
-export type Board = (Player | "")[];
+export type Winner = Player | "draw";
+export type Board = (Winner | null)[];
 
 export type Database = {
   public: {

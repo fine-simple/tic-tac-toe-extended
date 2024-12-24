@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import type { Player, Game, Board } from "@/types/database";
+import type { Player, Game, Board, Winner } from "@/types/database";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useParams } from "next/navigation";
 import {
@@ -20,14 +20,16 @@ const handleSubscription = (
   }
 };
 
+interface GameState extends Omit<Game, "board"> {
+  board: Board;
+}
+
 export default function ClassicTicTacToe() {
   const { roomId } = useParams();
   const userId = useCurrentUser();
 
-  const [board, setBoard] = useState<Board>(Array(9).fill(null));
-  const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
-  const [winner, setWinner] = useState<Player | null>(null);
-  const [gameStatus, setGameStatus] = useState<Game["status"]>("waiting");
+  const [gameState, setGameState] = useState<GameState | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [playerSymbol, setPlayerSymbol] = useState<Player | null>(null);
 
@@ -36,17 +38,17 @@ export default function ClassicTicTacToe() {
       try {
         const { data, error } = await db
           .from("games")
-          .select("board, current_player, status, winner")
+          .select("*")
           .eq("id", roomId)
           .single();
 
         if (error) throw error;
 
         if (data) {
-          setBoard(JSON.parse(data.board));
-          setCurrentPlayer(data.current_player);
-          setGameStatus(data.status);
-          setWinner(data.winner);
+          setGameState({
+            ...data,
+            board: JSON.parse(data.board),
+          });
         }
       } catch (err) {
         console.error("Error fetching game state:", err);
@@ -64,11 +66,11 @@ export default function ClassicTicTacToe() {
         table: "games",
         filter: `id=eq.${roomId}`,
       },
-      (payload: { new: Game }) => {
-        setBoard(payload.new.board as unknown as Board);
-        setCurrentPlayer(payload.new.current_player);
-        setGameStatus(payload.new.status);
-        setWinner(payload.new.winner);
+      (payload: { new: GameState }) => {
+        setGameState({
+          ...payload.new,
+          board: payload.new.board,
+        });
       }
     );
 
@@ -120,62 +122,81 @@ export default function ClassicTicTacToe() {
   }, [userId, roomId]);
 
   const isMyTurn = useMemo(
-    () => playerSymbol === currentPlayer,
-    [currentPlayer, playerSymbol]
+    () => playerSymbol === gameState?.current_player,
+    [gameState, playerSymbol]
   );
 
-  const handleClick = async (index: number) => {
-    if (!isMyTurn) return;
-    if (gameStatus === "completed" || board[index] || winner) {
-      return;
-    }
+  const handleClick = useCallback(
+    async (index: number) => {
+      if (!isMyTurn) return;
+      if (!gameState) return;
 
-    try {
-      const newBoard = [...board];
-      newBoard[index] = currentPlayer;
-      const newWinner = calculateWinner(newBoard);
-      const isDraw = !newWinner && newBoard.every((cell) => cell !== null);
-      const nextPlayer = currentPlayer === "X" ? "O" : "X";
-      const newStatus = newWinner || isDraw ? "completed" : "in_progress";
+      const { board, current_player, status, winner } = gameState;
 
-      const { error } = await db
-        .from("games")
-        .update({
-          board: JSON.stringify(newBoard),
-          current_player: nextPlayer,
-          winner: newWinner,
-          status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", roomId);
+      if (status === "completed" || board[index] || winner) {
+        return;
+      }
 
-      if (error) throw error;
-    } catch (err) {
-      console.error("Error updating game state:", err);
-      setError("Failed to update game");
-    }
-  };
+      try {
+        const newBoard = [...board];
+        newBoard[index] = current_player;
+        const newWinner = calculateWinner(newBoard);
+        const isDraw = !newWinner && newBoard.every((cell) => cell !== null);
+        const nextPlayer = current_player === "X" ? "O" : "X";
+        const newStatus = newWinner || isDraw ? "completed" : "in_progress";
 
-  const renderSquare = (index: number) => (
-    <Button
-      className={`w-20 h-20 text-4xl font-bold isolate ${
-        !board[index] ? "bg-gray-200 hover:bg-gray-300" : ""
-      }`}
-      onClick={() => handleClick(index)}
-      disabled={!isMyTurn || gameStatus !== "in_progress" || !!board[index]}
-      variant={board[index] ? "default" : "secondary"}
-      translate="no"
-    >
-      {board[index] || ""}
-    </Button>
+        const { error } = await db
+          .from("games")
+          .update({
+            board: JSON.stringify(newBoard),
+            current_player: nextPlayer,
+            winner: newWinner,
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", roomId);
+
+        if (error) throw error;
+      } catch (err) {
+        console.error("Error updating game state:", err);
+        setError("Failed to update game");
+      }
+    },
+    [gameState, isMyTurn, roomId]
+  );
+
+  const renderSquare = useCallback(
+    (index: number) => {
+      if (!gameState) return null;
+      const { board, status } = gameState;
+
+      return (
+        <Button
+          className={`w-20 h-20 text-4xl font-bold isolate ${
+            !board[index] ? "bg-gray-200 hover:bg-gray-300" : ""
+          }`}
+          onClick={() => handleClick(index)}
+          disabled={!isMyTurn || status !== "in_progress" || !!board[index]}
+          variant={board[index] ? "default" : "secondary"}
+          translate="no"
+        >
+          {board[index] || ""}
+        </Button>
+      );
+    },
+    [gameState, handleClick, isMyTurn]
   );
 
   const status = useMemo(() => {
+    if (!gameState) return null;
+
+    const { status, winner } = gameState;
+
     if (winner) {
       return <div className="text-green-600">Winner: {winner}</div>;
     }
 
-    switch (gameStatus) {
+    switch (status) {
       case "completed":
         return "Game Draw!";
       case "waiting":
@@ -198,7 +219,7 @@ export default function ClassicTicTacToe() {
       default:
         return null;
     }
-  }, [gameStatus, isMyTurn, playerSymbol, winner]);
+  }, [gameState, isMyTurn, playerSymbol]);
 
   if (error) {
     return <div className="text-red-600 text-center">{error}</div>;
@@ -210,18 +231,18 @@ export default function ClassicTicTacToe() {
         {playerSymbol ? (
           <div>You play with {playerSymbol}</div>
         ) : (
-          <div>Spectating: {currentPlayer} turn</div>
+          <div>Spectating: {gameState?.current_player} turn</div>
         )}
         <div>{status}</div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 bg-muted p-4 rounded-lg">
-        {board.map((_, index) => (
+        {gameState?.board.map((_, index) => (
           <div key={index}>{renderSquare(index)}</div>
         ))}
       </div>
 
-      {gameStatus === "completed" && (
+      {gameState?.status === "completed" && (
         <div className="text-muted-foreground text-center">
           Game Over! Create a new game to play again.
         </div>
@@ -230,7 +251,7 @@ export default function ClassicTicTacToe() {
   );
 }
 
-function calculateWinner(squares: Board): Player | null {
+function calculateWinner(squares: Board): Winner | null {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
