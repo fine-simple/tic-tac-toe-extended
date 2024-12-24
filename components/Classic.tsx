@@ -6,6 +6,19 @@ import { db } from "@/lib/db";
 import type { Player, Game, Board } from "@/types/database";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useParams } from "next/navigation";
+import {
+  REALTIME_SUBSCRIBE_STATES,
+  RealtimeChannel,
+} from "@supabase/supabase-js";
+
+const handleSubscription = (
+  status: REALTIME_SUBSCRIBE_STATES,
+  channel: RealtimeChannel
+) => {
+  if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+    channel.subscribe((status) => handleSubscription(status, channel));
+  }
+};
 
 export default function ClassicTicTacToe() {
   const { roomId } = useParams();
@@ -43,24 +56,23 @@ export default function ClassicTicTacToe() {
 
     fetchGameState();
 
-    const channel = db
-      .channel(`game_changes`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "games",
-          filter: `id=eq.${roomId}`,
-        },
-        (payload: { new: Game }) => {
-          setBoard(payload.new.board as unknown as Board);
-          setCurrentPlayer(payload.new.current_player);
-          setGameStatus(payload.new.status);
-          setWinner(payload.new.winner);
-        }
-      )
-      .subscribe();
+    const channel = db.channel(`game_changes`).on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "games",
+        filter: `id=eq.${roomId}`,
+      },
+      (payload: { new: Game }) => {
+        setBoard(payload.new.board as unknown as Board);
+        setCurrentPlayer(payload.new.current_player);
+        setGameStatus(payload.new.status);
+        setWinner(payload.new.winner);
+      }
+    );
+
+    channel.subscribe((status) => handleSubscription(status, channel));
 
     return () => {
       db.removeChannel(channel);
@@ -146,12 +158,13 @@ export default function ClassicTicTacToe() {
 
   const renderSquare = (index: number) => (
     <Button
-      className={`w-20 h-20 text-4xl font-bold ${
+      className={`w-20 h-20 text-4xl font-bold isolate ${
         !board[index] ? "bg-gray-200 hover:bg-gray-300" : ""
       }`}
       onClick={() => handleClick(index)}
       disabled={!isMyTurn || gameStatus !== "in_progress" || !!board[index]}
       variant={board[index] ? "default" : "secondary"}
+      translate="no"
     >
       {board[index] || ""}
     </Button>

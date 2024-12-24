@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { db } from "@/lib/db";
 import type { Session } from "@supabase/supabase-js";
 
@@ -15,7 +14,6 @@ interface GameError {
 }
 
 export default function MainMenu() {
-  const [joinCode, setJoinCode] = useState("");
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<GameError | null>(null);
@@ -100,108 +98,6 @@ export default function MainMenu() {
     }
   };
 
-  const joinGame = async () => {
-    if (!joinCode) {
-      setError({ message: "Please enter a room code", status: "warning" });
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const userId = session?.user?.id || guestId;
-      if (!userId) {
-        setError({ message: "Unable to join game", status: "error" });
-        return;
-      }
-
-      const { data, error: fetchError } = await db
-        .from("games")
-        .select("*")
-        .eq("id", joinCode)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (!data) {
-        setError({ message: "Game not found", status: "error" });
-        return;
-      }
-
-      if (data.player_o) {
-        setError({ message: "Game is full", status: "error" });
-        return;
-      }
-
-      const { error: updateError } = await db
-        .from("games")
-        .update({
-          player_o: userId,
-          is_guest_o: !session, // Flag to indicate if player O is a guest
-          status: "in_progress",
-        })
-        .eq("id", joinCode);
-
-      if (updateError) throw updateError;
-
-      router.push(`/game/${joinCode}?mode=${data.mode}`);
-    } catch (err) {
-      setError({
-        message: "Failed to join game. Please try again.",
-        status: "error",
-      });
-      console.error("Error joining game:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  //eslint-disable-next-line
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await db.auth.signInWithOAuth({
-        provider: "google",
-      });
-      if (error) throw error;
-    } catch (err) {
-      setError({
-        message: "Failed to sign in with Google",
-        status: "error",
-      });
-      console.error("Error logging in to Google:", err);
-    }
-  };
-
-  //eslint-disable-next-line
-  const signInWithFacebook = async () => {
-    try {
-      const { error } = await db.auth.signInWithOAuth({
-        provider: "facebook",
-      });
-      if (error) throw error;
-    } catch (err) {
-      setError({
-        message: "Failed to sign in with Facebook",
-        status: "error",
-      });
-      console.error("Error logging in to Facebook:", err);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      const { error } = await db.auth.signOut();
-      if (error) throw error;
-    } catch (err) {
-      setError({
-        message: "Failed to sign out",
-        status: "error",
-      });
-      console.error("Error signing out:", err);
-    }
-  };
-
   return (
     <div className="max-w-md mx-auto space-y-8 p-4">
       {error && (
@@ -229,60 +125,6 @@ export default function MainMenu() {
             Super Mode
           </Button>
         </div>
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Join Game</h2>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Input
-            type="text"
-            placeholder="Enter room code"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value)}
-            disabled={loading}
-            className="flex-1"
-          />
-          <Button onClick={joinGame} disabled={loading || !joinCode}>
-            Join
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {
-          session ? (
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-center">
-                Signed in as{" "}
-                <span className="font-medium">{session.user.email}</span>
-              </p>
-              <Button onClick={signOut} variant="outline" disabled={loading}>
-                Sign out
-              </Button>
-            </div>
-          ) : null
-          // <div className="space-y-4">
-          //   <p className="text-center text-muted-foreground">
-          //     Playing as guest. Sign in to save your progress and stats.
-          //   </p>
-          //   <div className="flex flex-col sm:flex-row justify-center gap-4">
-          //     <Button
-          //       onClick={signInWithGoogle}
-          //       disabled={loading}
-          //       variant="outline"
-          //     >
-          //       Sign in with Google
-          //     </Button>
-          //     <Button
-          //       onClick={signInWithFacebook}
-          //       disabled={loading}
-          //       variant="outline"
-          //     >
-          //       Sign in with Facebook
-          //     </Button>
-          //   </div>
-          // </div>
-        }
       </div>
     </div>
   );

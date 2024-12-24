@@ -28,8 +28,12 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        dir="ltr"
       >
-        {children}
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold mb-8 text-center">Tic-Tac-Toe</h1>
+          {children}
+        </div>
         <Toaster />
       </body>
     </html>

@@ -196,44 +196,65 @@ export default function SuperTicTacToe() {
 
       if (boardWinner === "draw") {
         return (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-4xl md:text-7xl font-bold text-gray-600">
-              Draw
-            </span>
+          <div
+            key={boardIndex}
+            className="rounded-lg overflow-hidden ring-1 ring-gray-200"
+          >
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <span className="text-4xl md:text-7xl font-bold text-gray-600">
+                Draw
+              </span>
+            </div>
           </div>
         );
       } else if (boardWinner) {
         return (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-8xl md:text-9xl font-bold text-blue-600">
-              {boardWinner}
-            </span>
+          <div
+            key={boardIndex}
+            className="rounded-lg overflow-hidden ring-1 ring-gray-200"
+          >
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <span className="text-8xl md:text-9xl font-bold text-blue-600">
+                {boardWinner}
+              </span>
+            </div>
           </div>
         );
       }
 
       return (
-        <div className="grid grid-cols-3 place-items-center gap-2 p-1 bg-gray-200">
-          {gameState.board[boardIndex].map((cell, cellIndex) => (
-            <Button
-              key={cellIndex}
-              variant={cell ? "default" : "secondary"}
-              className={`w-8 h-8 md_sm:w-10 md_sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-lg font-bold ${
-                !isMyTurn ? "cursor-not-allowed" : ""
-              }`}
-              onClick={() => handleClick(boardIndex, cellIndex)}
-              disabled={
-                !isMyTurn ||
-                gameState.status === "completed" ||
-                gameState.status === "waiting" ||
-                cell !== null ||
-                (gameState.active_board !== null &&
-                  gameState.active_board !== boardIndex)
-              }
-            >
-              {cell || ""}
-            </Button>
-          ))}
+        <div
+          key={boardIndex}
+          className={`rounded-lg overflow-hidden ${
+            gameState.status === "in_progress" &&
+            (gameState.active_board === null ||
+              gameState.active_board === boardIndex)
+              ? "ring-4 ring-blue-500"
+              : "ring-1 ring-gray-200"
+          }`}
+        >
+          <div className="grid grid-cols-3 place-items-center gap-2 p-1 bg-gray-200">
+            {gameState.board[boardIndex].map((cell, cellIndex) => (
+              <Button
+                key={cellIndex}
+                variant={cell ? "default" : "secondary"}
+                className={`w-8 h-8 md_sm:w-10 md_sm:h-10 text-lg font-bold ${
+                  !isMyTurn ? "cursor-not-allowed" : ""
+                }`}
+                onClick={() => handleClick(boardIndex, cellIndex)}
+                disabled={
+                  !isMyTurn ||
+                  gameState.status === "completed" ||
+                  gameState.status === "waiting" ||
+                  cell !== null ||
+                  (gameState.active_board !== null &&
+                    gameState.active_board !== boardIndex)
+                }
+              >
+                {cell || ""}
+              </Button>
+            ))}
+          </div>
         </div>
       );
     },
@@ -289,21 +310,8 @@ export default function SuperTicTacToe() {
         <div className="my-3">{status}</div>
       </div>
 
-      <div className="grid grid-cols-3 grid-rows-3 gap-4 w-full">
-        {gameState.board.map((_, index) => (
-          <div
-            key={index}
-            className={`rounded-lg overflow-hidden ${
-              gameState.status !== "completed" &&
-              (gameState.active_board === null ||
-                gameState.active_board === index)
-                ? "ring-4 ring-blue-500"
-                : "ring-1 ring-gray-200"
-            }`}
-          >
-            {renderBoard(index)}
-          </div>
-        ))}
+      <div className="grid grid-cols-3 grid-rows-3 gap-4 w-full md:w-3/4">
+        {gameState.board.map((_, index) => renderBoard(index))}
       </div>
     </div>
   );

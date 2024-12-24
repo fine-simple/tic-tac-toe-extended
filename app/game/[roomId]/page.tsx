@@ -72,56 +72,43 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-          <div className="text-xl">Loading game...</div>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+        <div className="text-xl">Loading game...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
-          <div className="text-xl text-red-600">{error.message}</div>
-          <Button onClick={handleReturnToMenu}>Return to Main Menu</Button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
+        <div className="text-xl text-red-600">{error.message}</div>
+        <Button onClick={handleReturnToMenu}>Return to Main Menu</Button>
       </div>
     );
   }
 
   if (!gameMode) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
-          <div className="text-xl">Invalid game mode</div>
-          <Button onClick={handleReturnToMenu}>Return to Main Menu</Button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
+        <div className="text-xl">Invalid game mode</div>
+        <Button onClick={handleReturnToMenu}>Return to Main Menu</Button>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-1 md:px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex-col md:flex-row flex items-center space-x-4">
-            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold">
-              Game Room: {params.roomId}
-            </h1>
-            <Button variant="outline" size="sm" onClick={handleCopyRoomUrl}>
-              Copy Room URL
-            </Button>
-          </div>
-          <Button variant="outline" onClick={handleReturnToMenu}>
-            Exit Game
-          </Button>
-        </div>
+    <div className="max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <Button variant="outline" onClick={handleReturnToMenu}>
+          Back to Main Menu
+        </Button>
+        <Button variant="outline" onClick={handleCopyRoomUrl}>
+          Copy join link
+        </Button>
+      </div>
 
-        <div className="bg-card rounded-lg shadow-lg p-2 md:p-6">
-          {gameMode === "classic" ? <ClassicTicTacToe /> : <SuperTicTacToe />}
-        </div>
+      <div className="bg-card rounded-lg shadow-lg p-2 md:p-6">
+        {gameMode === "classic" ? <ClassicTicTacToe /> : <SuperTicTacToe />}
       </div>
     </div>
   );
