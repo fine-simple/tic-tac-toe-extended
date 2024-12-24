@@ -6,6 +6,7 @@ import { GameStatus } from "@/components/GameStatus";
 import ClassicTicTacToe from "@/components/Classic";
 import Super from "@/components/Super";
 import { Button } from "@/components/ui/button";
+import { GameOver } from "@/components/GameOver";
 
 export function GamePage() {
   const {
@@ -15,6 +16,8 @@ export function GamePage() {
     loading,
     handleCopyRoomUrl,
     handleReturnToMenu,
+    roomId,
+    userId,
   } = useGameRoom();
 
   if (loading) {
@@ -56,9 +59,11 @@ export function GamePage() {
         )}
 
         {gameState.status === "completed" && (
-          <div className="text-muted-foreground text-center">
-            Game Over! Create a new game to play again.
-          </div>
+          <GameOver
+            roomId={roomId}
+            userId={userId}
+            playerSymbol={playerSymbol}
+          />
         )}
       </div>
     </GameLayout>

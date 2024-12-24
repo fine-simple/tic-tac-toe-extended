@@ -22,8 +22,7 @@ export type Database = {
           created_at: string;
           current_player: Player;
           id: string;
-          is_guest_o: boolean | null;
-          is_guest_x: boolean | null;
+          rematch_requested_by?: string | null;
           mode: GameMode;
           player_o: string | null;
           player_x: string;
@@ -37,8 +36,7 @@ export type Database = {
           created_at?: string;
           current_player: string;
           id: string;
-          is_guest_o?: boolean | null;
-          is_guest_x?: boolean | null;
+          rematch_requested_by?: string | null;
           mode?: string;
           player_o?: string | null;
           player_x: string;
@@ -52,8 +50,7 @@ export type Database = {
           created_at?: string;
           current_player?: string;
           id?: string;
-          is_guest_o?: boolean | null;
-          is_guest_x?: boolean | null;
+          rematch_requested_by?: string | null;
           mode?: string;
           player_o?: string | null;
           player_x?: string;

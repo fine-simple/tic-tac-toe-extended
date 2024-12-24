@@ -53,5 +53,7 @@ export const useGameRoom = () => {
       });
     },
     handleReturnToMenu: () => router.push("/"),
+    userId,
+    roomId,
   };
 };

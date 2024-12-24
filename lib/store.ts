@@ -15,6 +15,8 @@ interface GameStore {
     roomId: string,
     callback: (roomId: string) => void
   ) => () => void;
+  requestRematch: (roomId: string, userId: string) => Promise<void>;
+  acceptRematch: (roomId: string) => Promise<void>;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -40,7 +42,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
         player_x: userId,
         board: JSON.stringify(initialBoard),
         status: "waiting",
-        is_guest_x: userId.startsWith("guest_"),
       });
 
       return roomId;
@@ -124,5 +125,46 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return () => {
       db.removeChannel(channel);
     };
+  },
+  requestRematch: async (roomId, userId) => {
+    try {
+      await db
+        .from("games")
+        .update({
+          rematch_requested_by: userId,
+        })
+        .eq("id", roomId);
+    } catch (err) {
+      set({ error: "Failed to request rematch" });
+      throw err;
+    }
+  },
+
+  acceptRematch: async (roomId) => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    try {
+      const initialBoard =
+        gameState.mode === "classic"
+          ? Array(9).fill(null)
+          : Array(9).fill(Array(9).fill(null));
+
+      await db
+        .from("games")
+        .update({
+          board: JSON.stringify(initialBoard),
+          current_player: "X",
+          status: "in_progress",
+          winner: null,
+          active_board: null,
+          rematch_requested_by: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", roomId);
+    } catch (err) {
+      set({ error: "Failed to accept rematch" });
+      throw err;
+    }
   },
 }));
