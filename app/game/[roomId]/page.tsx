@@ -15,6 +15,19 @@ import {
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Player } from "@/types/database";
 
+const handleSubscription = (
+  status: REALTIME_SUBSCRIBE_STATES,
+  channel: RealtimeChannel,
+  callback: () => void
+) => {
+  if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+    callback();
+    channel.subscribe((status) =>
+      handleSubscription(status, channel, callback)
+    );
+  }
+};
+
 type GameState = GameClassicState | GameSuperState;
 
 export default function GamePage() {
@@ -59,16 +72,6 @@ export default function GamePage() {
       }
     };
 
-    const handleSubscription = (
-      status: REALTIME_SUBSCRIBE_STATES,
-      channel: RealtimeChannel
-    ) => {
-      if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-        fetchGameState();
-        channel.subscribe((status) => handleSubscription(status, channel));
-      }
-    };
-
     fetchGameState();
 
     const channel = db.channel(`game_changes`).on(
@@ -87,7 +90,9 @@ export default function GamePage() {
       }
     );
 
-    channel.subscribe((status) => handleSubscription(status, channel));
+    channel.subscribe((status) =>
+      handleSubscription(status, channel, fetchGameState)
+    );
 
     return () => {
       db.removeChannel(channel);
