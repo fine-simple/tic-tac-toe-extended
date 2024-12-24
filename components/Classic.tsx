@@ -2,7 +2,7 @@
 
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
-import { useGameStore } from "@/lib/game/store";
+import { useGameStore } from "@/lib/store";
 import { calculateWinner } from "@/lib/utils";
 import { Board } from "@/types/database";
 

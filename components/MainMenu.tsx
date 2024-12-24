@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useGameStore } from "@/lib/game/store";
+import { useGameStore } from "@/lib/store";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { GameMode } from "@/types/database";
 

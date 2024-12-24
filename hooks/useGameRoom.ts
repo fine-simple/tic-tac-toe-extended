@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "./use-toast";
-import { useGameStore } from "@/lib/game/store";
+import { useGameStore } from "@/lib/store";
 import { useCurrentUser } from "./useCurrentUser";
 
 export const useGameRoom = () => {

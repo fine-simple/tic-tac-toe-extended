@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { useGameStore } from "@/lib/game/store";
+import { useGameStore } from "@/lib/store";
 
 interface GameStatusProps {
   playerSymbol: string | null;
