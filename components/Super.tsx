@@ -63,7 +63,7 @@ const Super: FC<Super> = ({ isMyTurn }) => {
 
     if (boardWinner === "draw") {
       return (
-        <div className="rounded-lg overflow-hidden ring-1 ring-gray-200">
+        <div className="h-full rounded-lg overflow-hidden ring-1 ring-gray-200">
           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
             <span className="text-4xl md:text-7xl font-bold text-gray-600">
               Draw
@@ -75,7 +75,7 @@ const Super: FC<Super> = ({ isMyTurn }) => {
 
     if (boardWinner) {
       return (
-        <div className="rounded-lg overflow-hidden ring-1 ring-gray-200">
+        <div className="h-full rounded-lg overflow-hidden ring-1 ring-gray-200">
           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
             <span className="text-8xl md:text-9xl font-bold text-blue-600">
               {boardWinner}
