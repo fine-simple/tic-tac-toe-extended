@@ -38,7 +38,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       await db.from("games").insert({
         id: roomId,
         mode,
-        current_player: "X",
+        current_player: ["X", "O"][Math.floor(Math.random() * 2)],
         player_x: userId,
         board: JSON.stringify(initialBoard),
         status: "waiting",
@@ -154,14 +154,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
         .from("games")
         .update({
           board: JSON.stringify(initialBoard),
-          current_player: "X",
+          current_player: ["X", "O"][Math.floor(Math.random() * 2)],
           status: "in_progress",
           winner: null,
           active_board: null,
           rematch_requested_by: null,
           updated_at: new Date().toISOString(),
-          player_o: gameState.player_x,
-          player_x: gameState.player_o as string,
         })
         .eq("id", roomId);
     } catch (err) {
