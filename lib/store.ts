@@ -24,7 +24,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   loading: false,
   error: null,
 
-  setGameState: (state) => set({ gameState: state }),
+  setGameState: state => set({ gameState: state }),
 
   createGame: async (mode, userId) => {
     set({ loading: true, error: null });
@@ -53,7 +53,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  fetchGame: async (roomId) => {
+  fetchGame: async roomId => {
     set({ loading: true, error: null });
     try {
       const { data, error } = await db
@@ -80,7 +80,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  updateGame: async (updates) => {
+  updateGame: async updates => {
     const { gameState } = get();
     if (!gameState) return;
 
@@ -140,7 +140,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  acceptRematch: async (roomId) => {
+  acceptRematch: async roomId => {
     const { gameState } = get();
     if (!gameState) return;
 
@@ -160,6 +160,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           active_board: null,
           rematch_requested_by: null,
           updated_at: new Date().toISOString(),
+          player_o: gameState.player_x,
+          player_x: gameState.player_o as string,
         })
         .eq("id", roomId);
     } catch (err) {
