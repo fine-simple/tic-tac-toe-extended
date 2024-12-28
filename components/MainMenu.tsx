@@ -48,8 +48,8 @@ export default function MainMenu() {
         <div
           className={`p-4 rounded-md ${
             error.status === "error"
-              ? "bg-red-100 text-red-700"
-              : "bg-yellow-100 text-yellow-700"
+              ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
           }`}
         >
           {error.message}

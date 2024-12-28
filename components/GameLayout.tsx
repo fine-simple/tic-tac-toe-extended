@@ -21,7 +21,9 @@ export const GameLayout: FC<PropsWithChildren<GameLayoutProps>> = ({
           Copy join link
         </Button>
       </div>
-      <div className="bg-card rounded-lg shadow-lg p-2 md:p-6">{children}</div>
+      <div className="bg-card rounded-lg shadow-lg p-2 md:p-6 dark:bg-neutral-900">
+        {children}
+      </div>
     </div>
   );
 };
